@@ -492,7 +492,7 @@
               <input id="cn" placeholder="e.g. 099088" inputmode="numeric">
             </div>
             <div class="form-group">
-              <label>Offset (seconds)</label>
+              <label>Offset (can be negative)</label>
               <input id="offsetKnown" placeholder="e.g. 39600" inputmode="numeric">
             </div>
           </div>
@@ -528,7 +528,7 @@
               <input id="N" type="number" min="0" placeholder="e.g. 2">
             </div>
             <div class="form-group">
-              <label>Offset (seconds)</label>
+              <label>Offset (can be negative)</label>
               <div class="input-group">
                 <input id="offsetGen" placeholder="e.g. 39600" inputmode="numeric">
                 <div class="quick-buttons">
@@ -601,11 +601,11 @@
     function parseTimeHHMMSS(raw){
       if(!raw) return null;
       const s = String(raw).replace(/\D/g,'');
-      if(s.length===0 || s.length>6) return null;
-      const p = s.padStart(6,'0');
-      const H = +p.slice(0,2), M = +p.slice(2,4), S = +p.slice(4,6);
+      // Accept exactly 6 digits as per updated version
+      if(!/^\d{6}$/.test(s)) return null;
+      const H = +s.slice(0,2), M = +s.slice(2,4), S = +s.slice(4,6);
       if(H>23 || M>59 || S>59) return null;
-      return {H,M,S,p};
+      return {H,M,S,p:s};
     }
     function seconds(h,m,s){ return h*3600 + m*60 + s }
     function pad(n,len){ return String(n).padStart(len,'0') }
@@ -649,52 +649,34 @@
       const s1 = seconds(t1.H,t1.M,t1.S);
       const s2 = seconds(t2.H,t2.M,t2.S);
 
-      // Differences should match for same day
-      const diffCode = c2 - c1;
-      const diffSec  = s2 - s1;
+      // Updated algorithm from new version - simpler and more reliable
+      const N = Math.floor((c2 - c1 - (s2 - s1)) / 86400);
+      const offset = c1 - s1 - (N * 86400);
 
-      // Start with floor; then adjust to keep offset in [0,86400)
-      function tryN(n){ return { n, off1: c1 - s1 - n*86400, off2: c2 - s2 - n*86400 }; }
-      let guess = Math.floor((c1 - s1)/86400);
-      let cand = [ tryN(guess-1), tryN(guess), tryN(guess+1) ];
-      cand = cand.filter(x => x.off1>=0 && x.off1<86400 && x.off2>=0 && x.off2<86400);
-      // Prefer the one where offsets match and diffs align
-      cand.sort((a,b)=>{
-        const aScore = (Math.abs(a.off1-a.off2)===0 ? 0 : 1) + (diffCode===diffSec ? 0 : 1);
-        const bScore = (Math.abs(b.off1-b.off2)===0 ? 0 : 1) + (diffCode===diffSec ? 0 : 1);
-        return aScore - bScore;
-      });
-      const chosen = cand.length? cand[0] : tryN(guess);
-      const N = chosen.n;
-      const offset1 = Math.round(chosen.off1);
-      const offset2 = Math.round(chosen.off2);
-
-      const out = `Offset = ${offset1}  |  N = ${N}`;
-      const meta = `Check: Δcode=${diffCode}, Δsec=${diffSec}  |  offset2=${offset2}`;
-      const warn = (offset1!==offset2 || diffCode!==diffSec) ? 'Warning: Samples may not be same-day or have noise; results shown from first pair.' : '';
+      const out = `Offset = ${offset}, N = ${N}`;
+      const meta = `Calculated from time/code differences`;
 
       document.getElementById('out2pt').textContent = out;
       document.getElementById('meta2pt').textContent = meta;
       const warnEl = document.getElementById('warn2pt');
-      if(warn) {
-        warnEl.textContent = warn;
-        warnEl.style.display = 'block';
-      } else {
-        warnEl.style.display = 'none';
-      }
+      warnEl.style.display = 'none';
       document.getElementById('res2pt').classList.remove('hidden');
       autoCopy('out2pt');
 
-      // Save for autofill (use time #1 as generator time)
-      lastFound = { N, offset: offset1, time: t1.p };
+      // Save for autofill (use time #2 as in updated version)
+      lastFound = { N, offset, time: t2.p };
     }
 
     function useInGenerator(){
       if(lastFound.N==null || lastFound.offset==null){ showToast('Run calculation first'); return; }
-      // Prefill generator
+      // Prefill generator - automatically switch to generator tab
       document.getElementById('N').value = String(lastFound.N);
       document.getElementById('offsetGen').value = String(lastFound.offset);
-      if(lastFound.time){ document.getElementById('timeB').value = lastFound.time; }
+      if(lastFound.time){ 
+        // Format time properly for generator
+        const timeStr = lastFound.time.padStart(6, '0');
+        document.getElementById('timeB').value = timeStr;
+      }
       showTab('gen');
       showToast('Pre-filled generator with calculated values');
     }
@@ -729,7 +711,11 @@
       if(lastFound.N==null || lastFound.offset==null){ showToast('Run calculation first'); return; }
       document.getElementById('N').value = String(lastFound.N);
       document.getElementById('offsetGen').value = String(lastFound.offset);
-      if(lastFound.time){ document.getElementById('timeB').value = lastFound.time; }
+      if(lastFound.time){ 
+        // Format time properly for generator
+        const timeStr = lastFound.time.padStart(6, '0');
+        document.getElementById('timeB').value = timeStr; 
+      }
       showTab('gen');
       showToast('Pre-filled generator with calculated values');
     }
@@ -752,16 +738,19 @@
       const seg3 = document.getElementById('seg3').value.trim();
       const offStr = document.getElementById('offsetGen').value.trim();
 
-      if(!seg1 || !t || !/^\d+$/.test(Nstr) || !seg5 || !seg6 || !/^\d+$/.test(seg3) || !/^\d+$/.test(offStr)){
+      if(!seg1 || !t || !/^-?\d+$/.test(Nstr) || !seg5 || !seg6 || !/^\d+$/.test(seg3) || !/^-?\d+$/.test(offStr)){
         return setBlock('resGen', 'Please fill all fields correctly.');
       }
       const N = +Nstr; const offset = +offStr;
       const s = seconds(t.H,t.M,t.S);
       let seg2num = s + offset + (N*86400);
-      const seg2 = (String(seg2num).length < 6) ? pad(seg2num,6) : String(seg2num);
-      const hh = pad(t.H,2), mm = pad(t.M,2), ss = pad(t.S,2);
+      const seg2 = String(seg2num).padStart(6,'0');
+      
+      // Updated seg4 calculation from new version
+      const hh = String(t.H), mm = String(t.M).padStart(2,'0'), ss = String(t.S).padStart(2,'0');
       const seg4 = (hh+mm+ss).replace(/^0+/, '');
-      fileTimeStr = hh + mm + ss; // for filename
+      
+      fileTimeStr = hh.padStart(2,'0') + mm + ss; // for filename
       const full = seg1 + seg2 + seg3 + seg4 + seg5 + seg6;
 
       document.getElementById('barcodeOut').textContent = full;
@@ -770,15 +759,31 @@
       autoCopy('barcodeOut');
 
       try{ 
-        JsBarcode(document.getElementById('barcodeSvg'), full, {
-          format:'CODE128', 
-          width:2, 
-          height:80, 
-          displayValue:false, 
-          margin:10
-        }); 
+        // Use online barcode service as fallback if JsBarcode fails
+        const barcodeUrl = `https://barcode.orcascan.com/?type=code128&data=${encodeURIComponent(full)}`;
+        const barcodeImg = new Image();
+        barcodeImg.onload = function() {
+          const svgEl = document.getElementById('barcodeSvg');
+          svgEl.innerHTML = `<image href="${barcodeUrl}" width="100%" height="80"/>`;
+        };
+        barcodeImg.onerror = function() {
+          // Fallback to JsBarcode
+          JsBarcode(document.getElementById('barcodeSvg'), full, {
+            format:'CODE128', 
+            width:2, 
+            height:80, 
+            displayValue:false, 
+            margin:10
+          });
+        };
+        barcodeImg.src = barcodeUrl;
       }
-      catch(e){ console.error(e); }
+      catch(e){ 
+        console.error(e);
+        // Try online service as backup
+        const barcodeUrl = `https://barcode.orcascan.com/?type=code128&data=${encodeURIComponent(full)}`;
+        document.getElementById('barcodeSvg').innerHTML = `<image href="${barcodeUrl}" width="100%" height="80"/>`;
+      }
     }
 
     function clearGen(){ 
