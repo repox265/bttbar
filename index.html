@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BTTools v3 – Offset/N Finder + Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #eef2ff;
+      --success: #059669;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --bg: #f8fafc;
+      --bg-secondary: #f1f5f9;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --border-focus: #a855f7;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 1rem;
+      max-width: 100%;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 2rem 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.875rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 0.875rem;
+      font-weight: 300;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border-radius: 1rem;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: var(--bg-secondary);
+      padding: 0.5rem;
+      gap: 0.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      background: transparent;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      box-shadow: var(--shadow);
+    }
+
+    /* Panel */
+    .panel {
+      padding: 2rem 1.5rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-row {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .form-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      background: var(--surface);
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.875rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      text-align: center;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--primary-light);
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+    }
+
+    /* Quick buttons */
+    .quick-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: end;
+    }
+
+    .input-group input {
+      flex: 1;
+    }
+
+    /* Results */
+    .result {
+      margin-top: 1.5rem;
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: #f8fafc;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      font-family: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', monospace;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .result-meta {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin: 0.5rem 0;
+    }
+
+    .result-warning {
+      color: #fbbf24;
+      font-size: 0.75rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(251, 191, 36, 0.1);
+      border-radius: 0.375rem;
+    }
+
+    /* Barcode display */
+    .barcode-container {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    /* Utilities */
+    .hidden {
+      display: none;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .mt-4 {
+      margin-top: 1rem;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text);
+      color: white;
+      padding: 0.875rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-xl);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-0.25rem);
+    }
+
+    /* Formula display */
+    .formula {
+      background: var(--primary-light);
+      border: 1px solid var(--primary);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--primary-dark);
+    }
+
+    .formula code {
+      background: rgba(79, 70, 229, 0.1);
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.25rem;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 640px) {
+      .app {
+        padding: 0.5rem;
+      }
+
+      .header {
+        padding: 1.5rem 1rem;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .panel {
+        padding: 1.5rem 1rem;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .result-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .quick-buttons {
+        flex-direction: column;
+      }
+
+      .input-group {
+        flex-direction: column;
+      }
+
+      .tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+      }
+
+      .tab {
+        font-size: 0.8rem;
+        padding: 0.875rem;
+      }
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(0.5rem);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result {
+      animation: fadeIn 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="container">
+      <div class="header">
+        <h1>BTTools v3</h1>
+        <p>Find Offset & N • Find N (offset known) • Generate Barcode</p>
+      </div>
+
+      <div class="card">
+        <div class="tabs">
+          <button id="tab-2pt" class="tab active" onclick="showTab('two')">Find Offset & N</button>
+          <button id="tab-n" class="tab" onclick="showTab('nonly')">Find N (offset known)</button>
+          <button id="tab-gen" class="tab" onclick="showTab('gen')">Generate Barcode</button>
+        </div>
+
+        <!-- TAB 1: Find Offset & N from two samples -->
+        <section id="panel-2pt" class="panel">
+          <div class="form-row">
+            <div class="form-group">
+              <label>BST Time #1 (HHMMSS, no colons)</label>
+              <input id="t1" placeholder="e.g. 163128" inputmode="numeric">
+              <div class="hint">Enter 6 digits for time format</div>
+            </div>
+            <div class="form-group">
+              <label>Code #1</label>
+              <input id="c1" placeholder="e.g. 099088" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label>BST Time #2 (HHMMSS, no colons)</label>
+              <input id="t2" placeholder="e.g. 142355" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label>Code #2</label>
+              <input id="c2" placeholder="e.g. 098459" inputmode="numeric">
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="calcOffsetAndN()">Calculate Offset & N</button>
+            <button class="btn btn-secondary" onclick="clear2pt()">Clear</button>
+          </div>
+          <div id="res2pt" class="result hidden">
+            <div class="result-header">
+              <div id="out2pt" class="result-value"></div>
+              <button class="btn btn-ghost btn-small" onclick="copyFrom('out2pt')">Copy</button>
+            </div>
+            <div id="meta2pt" class="result-meta"></div>
+            <div id="warn2pt" class="result-warning" style="display: none;"></div>
+            <div class="btn-group mt-4">
+              <button class="btn btn-secondary" onclick="useInGenerator()">Use in Generator →</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: Find N when offset known -->
+        <section id="panel-nonly" class="panel hidden">
+          <div class="form-row">
+            <div class="form-group">
+              <label>BST Time (HHMMSS, no colons)</label>
+              <input id="tn" placeholder="e.g. 163128" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label>Code</label>
+              <input id="cn" placeholder="e.g. 099088" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label>Offset (seconds)</label>
+              <input id="offsetKnown" placeholder="e.g. 39600" inputmode="numeric">
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="calcNWithOffset()">Calculate N</button>
+            <button class="btn btn-secondary" onclick="clearNonly()">Clear</button>
+          </div>
+          <div id="resN" class="result hidden">
+            <div class="result-header">
+              <div id="outN" class="result-value"></div>
+              <button class="btn btn-ghost btn-small" onclick="copyFrom('outN')">Copy</button>
+            </div>
+            <div id="metaN" class="result-meta"></div>
+            <div class="btn-group mt-4">
+              <button class="btn btn-secondary" onclick="useNInGenerator()">Use in Generator →</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: Generate Barcode -->
+        <section id="panel-gen" class="panel hidden">
+          <div class="form-row">
+            <div class="form-group">
+              <label>seg1 (prefix — enter manually)</label>
+              <input id="seg1" placeholder="e.g. 2881754">
+            </div>
+            <div class="form-group">
+              <label>BST Time (HHMMSS, no colons)</label>
+              <input id="timeB" placeholder="e.g. 060500" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label>N (system day)</label>
+              <input id="N" type="number" min="0" placeholder="e.g. 2">
+            </div>
+            <div class="form-group">
+              <label>Offset (seconds)</label>
+              <div class="input-group">
+                <input id="offsetGen" placeholder="e.g. 39600" inputmode="numeric">
+                <div class="quick-buttons">
+                  <button class="btn btn-secondary btn-small" onclick="quickOffset(39600)">39600</button>
+                  <button class="btn btn-secondary btn-small" onclick="quickOffset(2800)">2800</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>seg5 (Cashier ID)</label>
+              <input id="seg5" placeholder="e.g. 77889" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label>seg6 (check/sequence)</label>
+              <input id="seg6" placeholder="e.g. 10" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label>seg3 (pad)</label>
+              <input id="seg3" value="000" readonly style="background: var(--bg-secondary);">
+            </div>
+          </div>
+          <div class="hint">seg2 = seconds + offset + N×86400. seg4 = HHMMSS with leading zeros removed.</div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="generateBarcode()">Generate</button>
+            <button class="btn btn-secondary" onclick="clearGen()">Clear</button>
+          </div>
+          <div id="resGen" class="result hidden">
+            <div class="result-header">
+              <div>
+                <div id="barcodeOut" class="result-value"></div>
+                <div id="genMeta" class="result-meta"></div>
+              </div>
+              <button class="btn btn-ghost btn-small" onclick="copyFrom('barcodeOut')">Copy</button>
+            </div>
+            <div class="barcode-container">
+              <svg id="barcodeSvg"></svg>
+            </div>
+            <div class="btn-group mt-4">
+              <button class="btn btn-primary" id="saveBtn" onclick="savePNG()">Save as PNG</button>
+            </div>
+          </div>
+        </section>
+
+        <div class="formula">
+          <strong>Formula:</strong> <code>code = s + offset + N×86400</code> where <code>s</code> is seconds since midnight for BST time. Time inputs accept HHMMSS with no colons.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">Copied</div>
+
+  <script>
+    // ---------- Tabs ----------
+    function showTab(which){
+      const two = document.getElementById('panel-2pt');
+      const nonly = document.getElementById('panel-nonly');
+      const gen  = document.getElementById('panel-gen');
+      const tTwo = document.getElementById('tab-2pt');
+      const tN   = document.getElementById('tab-n');
+      const tGen = document.getElementById('tab-gen');
+      const map = {two:[two,tTwo], nonly:[nonly,tN], gen:[gen,tGen]};
+      [two,nonly,gen].forEach(el=>el.classList.add('hidden'));
+      [tTwo,tN,tGen].forEach(el=>el.classList.remove('active'));
+      map[which][0].classList.remove('hidden');
+      map[which][1].classList.add('active');
+    }
+
+    // ---------- Utils ----------
+    function parseTimeHHMMSS(raw){
+      if(!raw) return null;
+      const s = String(raw).replace(/\D/g,'');
+      if(s.length===0 || s.length>6) return null;
+      const p = s.padStart(6,'0');
+      const H = +p.slice(0,2), M = +p.slice(2,4), S = +p.slice(4,6);
+      if(H>23 || M>59 || S>59) return null;
+      return {H,M,S,p};
+    }
+    function seconds(h,m,s){ return h*3600 + m*60 + s }
+    function pad(n,len){ return String(n).padStart(len,'0') }
+
+    function setBlock(id, msg){ 
+      const el = document.getElementById(id); 
+      el.classList.remove('hidden'); 
+      const valueEl = el.querySelector('.result-value, .value');
+      if(valueEl) valueEl.textContent = msg;
+    }
+    
+    function copyFrom(id){ 
+      const txt = document.getElementById(id).textContent; 
+      navigator.clipboard.writeText(txt).then(()=>showToast('Copied')); 
+    }
+    
+    function autoCopy(id){ 
+      const txt = document.getElementById(id).textContent; 
+      if(!txt) return; 
+      navigator.clipboard.writeText(txt).then(()=>showToast('Auto-copied to clipboard')); 
+    }
+    
+    function showToast(text){ 
+      const t = document.getElementById('toast'); 
+      t.textContent = text; 
+      t.classList.add('show'); 
+      setTimeout(()=> t.classList.remove('show'), 2000); 
+    }
+
+    // ---------- Tab 1: Find Offset & N ----------
+    let lastFound = { N:null, offset:null, time:null };
+    function calcOffsetAndN(){
+      const t1 = parseTimeHHMMSS(document.getElementById('t1').value);
+      const t2 = parseTimeHHMMSS(document.getElementById('t2').value);
+      const c1s = document.getElementById('c1').value.trim();
+      const c2s = document.getElementById('c2').value.trim();
+      if(!t1 || !t2 || !/^\d+$/.test(c1s) || !/^\d+$/.test(c2s)){
+        return setBlock('res2pt', 'Please enter valid HHMMSS and numeric codes.');
+      }
+      const c1 = +c1s, c2 = +c2s;
+      const s1 = seconds(t1.H,t1.M,t1.S);
+      const s2 = seconds(t2.H,t2.M,t2.S);
+
+      // Differences should match for same day
+      const diffCode = c2 - c1;
+      const diffSec  = s2 - s1;
+
+      // Start with floor; then adjust to keep offset in [0,86400)
+      function tryN(n){ return { n, off1: c1 - s1 - n*86400, off2: c2 - s2 - n*86400 }; }
+      let guess = Math.floor((c1 - s1)/86400);
+      let cand = [ tryN(guess-1), tryN(guess), tryN(guess+1) ];
+      cand = cand.filter(x => x.off1>=0 && x.off1<86400 && x.off2>=0 && x.off2<86400);
+      // Prefer the one where offsets match and diffs align
+      cand.sort((a,b)=>{
+        const aScore = (Math.abs(a.off1-a.off2)===0 ? 0 : 1) + (diffCode===diffSec ? 0 : 1);
+        const bScore = (Math.abs(b.off1-b.off2)===0 ? 0 : 1) + (diffCode===diffSec ? 0 : 1);
+        return aScore - bScore;
+      });
+      const chosen = cand.length? cand[0] : tryN(guess);
+      const N = chosen.n;
+      const offset1 = Math.round(chosen.off1);
+      const offset2 = Math.round(chosen.off2);
+
+      const out = `Offset = ${offset1}  |  N = ${N}`;
+      const meta = `Check: Δcode=${diffCode}, Δsec=${diffSec}  |  offset2=${offset2}`;
+      const warn = (offset1!==offset2 || diffCode!==diffSec) ? 'Warning: Samples may not be same-day or have noise; results shown from first pair.' : '';
+
+      document.getElementById('out2pt').textContent = out;
+      document.getElementById('meta2pt').textContent = meta;
+      const warnEl = document.getElementById('warn2pt');
+      if(warn) {
+        warnEl.textContent = warn;
+        warnEl.style.display = 'block';
+      } else {
+        warnEl.style.display = 'none';
+      }
+      document.getElementById('res2pt').classList.remove('hidden');
+      autoCopy('out2pt');
+
+      // Save for autofill (use time #1 as generator time)
+      lastFound = { N, offset: offset1, time: t1.p };
+    }
+
+    function useInGenerator(){
+      if(lastFound.N==null || lastFound.offset==null){ showToast('Run calculation first'); return; }
+      // Prefill generator
+      document.getElementById('N').value = String(lastFound.N);
+      document.getElementById('offsetGen').value = String(lastFound.offset);
+      if(lastFound.time){ document.getElementById('timeB').value = lastFound.time; }
+      showTab('gen');
+      showToast('Pre-filled generator with calculated values');
+    }
+
+    function clear2pt(){ 
+      ['t1','t2','c1','c2'].forEach(id=>document.getElementById(id).value=''); 
+      document.getElementById('res2pt').classList.add('hidden'); 
+      lastFound={N:null,offset:null,time:null}; 
+    }
+
+    // ---------- Tab 2: Find N with known offset ----------
+    function calcNWithOffset(){
+      const t = parseTimeHHMMSS(document.getElementById('tn').value);
+      const codeStr = document.getElementById('cn').value.trim();
+      const offStr = document.getElementById('offsetKnown').value.trim();
+      if(!t || !/^\d+$/.test(codeStr) || !/^\d+$/.test(offStr)){
+        return setBlock('resN', 'Please enter valid HHMMSS, numeric code and numeric offset.');
+      }
+      const code = +codeStr; const offset = +offStr;
+      const s = seconds(t.H,t.M,t.S);
+      const N = Math.floor((code - (s + offset)) / 86400);
+      document.getElementById('outN').textContent = `N = ${N}`;
+      document.getElementById('metaN').textContent = `seconds=${s} | offset=${offset} | N=floor((${code} - (${s}+${offset}))/86400)`;
+      document.getElementById('resN').classList.remove('hidden');
+      autoCopy('outN');
+
+      // Save for autofill
+      lastFound = { N, offset, time: t.p };
+    }
+
+    function useNInGenerator(){
+      if(lastFound.N==null || lastFound.offset==null){ showToast('Run calculation first'); return; }
+      document.getElementById('N').value = String(lastFound.N);
+      document.getElementById('offsetGen').value = String(lastFound.offset);
+      if(lastFound.time){ document.getElementById('timeB').value = lastFound.time; }
+      showTab('gen');
+      showToast('Pre-filled generator with calculated values');
+    }
+
+    function clearNonly(){ 
+      ['tn','cn','offsetKnown'].forEach(id=>document.getElementById(id).value=''); 
+      document.getElementById('resN').classList.add('hidden'); 
+      lastFound={N:null,offset:null,time:null}; 
+    }
+
+    // ---------- Tab 3: Generator ----------
+    let fileTimeStr = '';
+    function quickOffset(val){ document.getElementById('offsetGen').value = String(val); }
+    function generateBarcode(){
+      const seg1 = document.getElementById('seg1').value.trim();
+      const t = parseTimeHHMMSS(document.getElementById('timeB').value);
+      const Nstr = document.getElementById('N').value.trim();
+      const seg5 = document.getElementById('seg5').value.trim();
+      const seg6 = document.getElementById('seg6').value.trim();
+      const seg3 = document.getElementById('seg3').value.trim();
+      const offStr = document.getElementById('offsetGen').value.trim();
+
+      if(!seg1 || !t || !/^\d+$/.test(Nstr) || !seg5 || !seg6 || !/^\d+$/.test(seg3) || !/^\d+$/.test(offStr)){
+        return setBlock('resGen', 'Please fill all fields correctly.');
+      }
+      const N = +Nstr; const offset = +offStr;
+      const s = seconds(t.H,t.M,t.S);
+      let seg2num = s + offset + (N*86400);
+      const seg2 = (String(seg2num).length < 6) ? pad(seg2num,6) : String(seg2num);
+      const hh = pad(t.H,2), mm = pad(t.M,2), ss = pad(t.S,2);
+      const seg4 = (hh+mm+ss).replace(/^0+/, '');
+      fileTimeStr = hh + mm + ss; // for filename
+      const full = seg1 + seg2 + seg3 + seg4 + seg5 + seg6;
+
+      document.getElementById('barcodeOut').textContent = full;
+      document.getElementById('genMeta').textContent = `seg2=${seg2} (from ${s}+${offset}+${N}×86400), seg4=${seg4}`;
+      document.getElementById('resGen').classList.remove('hidden');
+      autoCopy('barcodeOut');
+
+      try{ 
+        JsBarcode(document.getElementById('barcodeSvg'), full, {
+          format:'CODE128', 
+          width:2, 
+          height:80, 
+          displayValue:false, 
+          margin:10
+        }); 
+      }
+      catch(e){ console.error(e); }
+    }
+
+    function clearGen(){ 
+      ['seg1','timeB','N','seg5','seg6','offsetGen'].forEach(id=>document.getElementById(id).value=''); 
+      document.getElementById('seg3').value='000'; 
+      document.getElementById('resGen').classList.add('hidden'); 
+      document.getElementById('barcodeSvg').innerHTML=''; 
+    }
+
+    // ---------- Save SVG as PNG ----------
+    function savePNG(){
+      const svg = document.getElementById('barcodeSvg');
+      if(!svg || !svg.innerHTML){ showToast('Nothing to save'); return; }
+      const xml = new XMLSerializer().serializeToString(svg);
+      const svg64 = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+      const img = new Image();
+      img.onload = function(){
+        const canvas = document.createElement('canvas');
+        const w = Math.max(600, img.width + 40);
+        const h = Math.max(160, img.height + 40);
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; 
+        ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img, 20, 20);
+        canvas.toBlob(function(blob){
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'BTTools_' + (fileTimeStr||'barcode') + '.png';
+          document.body.appendChild(a); 
+          a.click(); 
+          a.remove();
+          setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+          showToast('Barcode saved as PNG');
+        });
+      };
+      img.src = svg64;
+    }
+  </script>
+</body>
+</html>
