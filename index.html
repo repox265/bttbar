@@ -61,6 +61,9 @@
     .tab-panel-transition {
       transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
     }
+    .history-item:hover {
+        background-color: #374151; /* bg-gray-700 equivalent */
+    }
 
     /* Light Mode Specific Styles */
     body.light {
@@ -90,9 +93,9 @@
     <!-- Header -->
     <header class="relative w-full max-w-lg text-center p-4 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
       <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-        BTTools
+        BTTools v3.8
       </h1>
-      <p class="text-sm text-gray-400 mt-1">Advanced Barcode Utilities</p>
+      <p class="text-sm text-gray-400 mt-1">Sequnce Generator</p>
       <!-- Dark Mode Toggle -->
       <button id="theme-toggle" class="absolute top-4 right-4 p-2 rounded-full bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors btn-press">
         <svg id="moon-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -119,6 +122,7 @@
     <div class="w-full max-w-lg bg-gray-800 rounded-full p-1 flex shadow-inner">
       <button id="find-offset-btn" data-tab="find-offset" class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-700 text-gray-200">Find Offset</button>
       <button id="generate-btn" data-tab="generate" class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 hover:bg-gray-700">Generate</button>
+      <button id="history-btn" data-tab="history" class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 hover:bg-gray-700">History</button>
     </div>
 
     <!-- Tab Content Container -->
@@ -126,6 +130,10 @@
 
       <!-- Find Effective Offset Tab -->
       <div id="find-offset-tab" class="tab-panel tab-panel-transition space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Date</label>
+          <input type="date" id="dateInput1" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-400 mb-1">Time 1 (HHMMSS)</label>
@@ -196,13 +204,31 @@
             </div>
         </div>
       </div>
+
+      <!-- History Tab -->
+      <div id="history-tab" class="tab-panel tab-panel-transition hidden space-y-4">
+        <h2 class="text-xl font-bold text-center">Recent Offsets</h2>
+        <div class="flex items-end space-x-2">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-400 mb-1">Select Date to Load</label>
+                <input type="date" id="dateInput2" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
+            </div>
+            <button onclick="loadFromDate()" class="py-3 px-4 rounded-md bg-purple-600 text-white hover:bg-purple-700 transition-colors btn-press">
+                Load
+            </button>
+        </div>
+        <div id="history-list" class="space-y-2">
+          <!-- History items will be dynamically added here -->
+          <p id="no-history" class="text-gray-400 text-center">No saved offsets found.</p>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Footer -->
   <footer class="w-full p-4 text-center text-sm text-gray-500 border-t border-gray-800">
-    <p>&copy; 2024 BTTools. All Rights Reserved.</p>
-    <p class="mt-1">Version 1.1</p>
+    <p>&copy; 2025 BTTools. All Rights Reserved.</p>
+    <p class="mt-1">Version 3.8.6</p>
   </footer>
 
   <script>
@@ -216,6 +242,16 @@
     const sunIcon = document.getElementById('sun-icon');
     
     let generatedBarcodeCode = '';
+    const localStorageKey = 'bttools_offsets_history';
+
+    // Function to get current date in YYYY-MM-DD format
+    function getFormattedDate(date) {
+        const d = date || new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
 
     // Function to set the theme
     function setTheme(theme) {
@@ -268,6 +304,12 @@
             nextTab.classList.add('opacity-100', 'translate-y-0');
           }, 10); // A slight delay to allow the hidden class to be removed first
         }
+        
+        // Load specific content for each tab
+        if (targetTab === 'history') {
+            loadHistory();
+        }
+
       }, currentTab ? 300 : 0); // Delay matches the CSS transition time
     }
 
@@ -322,22 +364,101 @@
       element.classList.remove('hidden');
     }
 
-    function prefillGenerator(time, offset) {
-      document.getElementById('timeGen').value = 
-        `${String(time.H).padStart(2, '0')}${String(time.M).padStart(2, '0')}${String(time.S).padStart(2, '0')}`;
+    // History and storage functions
+    function getHistory() {
+      try {
+        const history = localStorage.getItem(localStorageKey);
+        return history ? JSON.parse(history) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveOffsetToHistory(offset, date) {
+        const history = getHistory();
+        const dateString = getFormattedDate(date);
+        
+        const existingIndex = history.findIndex(item => item.date === dateString);
+        if (existingIndex !== -1) {
+            history[existingIndex].offset = offset;
+        } else {
+            history.push({ date: dateString, offset: offset });
+        }
+        
+        history.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        const limitedHistory = history.slice(0, 10);
+        localStorage.setItem(localStorageKey, JSON.stringify(limitedHistory));
+    }
+
+    function deleteRecord(date) {
+        let history = getHistory();
+        history = history.filter(item => item.date !== date);
+        localStorage.setItem(localStorageKey, JSON.stringify(history));
+        showModal('Record Deleted', `The offset for ${date} has been removed.`);
+        loadHistory();
+    }
+
+    function loadHistory() {
+        const history = getHistory();
+        const historyList = document.getElementById('history-list');
+        historyList.innerHTML = '';
+        
+        if (history.length === 0) {
+            historyList.innerHTML = `<p id="no-history" class="text-gray-400 text-center">No saved offsets found.</p>`;
+        } else {
+            history.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex items-center justify-between p-3 bg-gray-700 rounded-md border border-gray-600 history-item transition-colors duration-200';
+                itemDiv.innerHTML = `
+                    <div class="flex-1">
+                        <div class="text-xs text-gray-400">${item.date}</div>
+                        <div class="text-lg font-semibold">${item.offset}</div>
+                    </div>
+                    <div class="space-x-2">
+                        <button onclick="prefillFromHistory('${item.date}', ${item.offset})" class="py-1 px-3 rounded-md bg-purple-600 text-white text-sm hover:bg-purple-700 transition-colors btn-press">Load</button>
+                        <button onclick="deleteRecord('${item.date}')" class="py-1 px-3 rounded-md bg-red-600 text-white text-sm hover:bg-red-700 transition-colors btn-press">Delete</button>
+                    </div>
+                `;
+                historyList.appendChild(itemDiv);
+            });
+        }
+    }
+    
+    function loadFromDate() {
+        const selectedDate = document.getElementById('dateInput2').value;
+        if (!selectedDate) {
+            showModal('Error', 'Please select a date to load.', true);
+            return;
+        }
+
+        const history = getHistory();
+        const record = history.find(item => item.date === selectedDate);
+        if (record) {
+            prefillFromHistory(record.date, record.offset);
+        } else {
+            showModal('Not Found', `No saved offset found for ${selectedDate}.`);
+        }
+    }
+
+    function prefillFromHistory(date, offset) {
+      document.getElementById('dateInput2').value = date;
+      document.getElementById('timeGen').value = '';
       document.getElementById('offsetGen').value = offset;
       
+      showModal('Loaded', `Offset ${offset} for ${date} has been loaded.`);
       switchTab('generate');
     }
 
     // Tab 1: Find Effective Offset
     function findEffectiveOffset() {
+      const selectedDate = document.getElementById('dateInput1').value;
       const t1 = parseTime(document.getElementById('time1').value);
       const c1 = +document.getElementById('code1').value.trim();
       const t2 = parseTime(document.getElementById('time2').value);
       const c2 = +document.getElementById('code2').value.trim();
 
-      if (!t1 || !t2 || isNaN(c1) || isNaN(c2)) {
+      if (!selectedDate || !t1 || !t2 || isNaN(c1) || isNaN(c2)) {
         showModal('Error', 'Please fill all fields with valid values.', true);
         return;
       }
@@ -350,8 +471,8 @@
       if (off1 !== off2) {
         showModal('Error', `Offsets differ! Offset 1: ${off1}, Offset 2: ${off2}. Cannot find a single effective offset.`, true);
       } else {
-        showModal('Success', `Effective Offset Found: ${off1}. The generator tab has been pre-filled for you.`, false);
-        prefillGenerator(t2, off1);
+        saveOffsetToHistory(off1, new Date(selectedDate));
+        prefillFromHistory(selectedDate, off1);
         showResult('result-find-offset', `Effective Offset: ${off1}`);
       }
     }
@@ -471,6 +592,11 @@
 
     // Initial setup
     document.addEventListener('DOMContentLoaded', () => {
+      // Set default date to today
+      const today = getFormattedDate();
+      document.getElementById('dateInput1').value = today;
+      document.getElementById('dateInput2').value = today;
+
       // Check for saved theme preference
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme) {
