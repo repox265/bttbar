@@ -3,464 +3,218 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BTTools v3 - Barcode Tools</title>
+  <title>BTTools - Barcode App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 0;
-      color: #333;
+      font-family: 'Inter', sans-serif;
+      background: #111827;
+      color: #e5e7eb;
     }
-
-    .container {
-      max-width: 100%;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
     }
-
-    .header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 1rem;
-      text-align: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    .scrollbar-hide {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
     }
-
-    .brand {
-      font-size: 1.5rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .result-container pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
     }
-
-    .subtitle {
-      font-size: 0.875rem;
-      color: #64748b;
-      margin-top: 0.25rem;
+    .shake {
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      perspective: 1000px;
     }
-
-    .main-content {
-      flex: 1;
-      padding: 1rem;
-    }
-
-    .tab-navigation {
-      display: flex;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 4px;
-      margin-bottom: 1rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 0.75rem 0.5rem;
-      border: none;
-      background: transparent;
-      color: #64748b;
-      font-weight: 600;
-      font-size: 0.875rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      text-align: center;
-    }
-
-    .tab-btn.active {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-    }
-
-    .tab-content {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 1.5rem;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .form-grid {
-      display: grid;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-label {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #475569;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .form-input {
-      padding: 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(5px);
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      transform: translateY(-1px);
-    }
-
-    .form-input:invalid {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-    }
-
-    .action-btn {
-      width: 100%;
-      padding: 1rem;
-      border: none;
-      border-radius: 16px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .action-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
-    }
-
-    .action-btn:hover::before {
-      left: 100%;
-    }
-
-    .action-btn:active {
-      transform: translateY(1px);
-    }
-
-    .result-panel {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: linear-gradient(135deg, #1e293b, #334155);
-      color: #e2e8f0;
-      border-radius: 12px;
-      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-      font-size: 0.875rem;
-      line-height: 1.6;
-      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
-      word-break: break-all;
-    }
-
-    .barcode-container {
-      margin-top: 1rem;
-      text-align: center;
-    }
-
-    .barcode-image {
-      max-width: 100%;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-      background: white;
-      padding: 1rem;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .icon {
-      width: 1.25rem;
-      height: 1.25rem;
-      fill: currentColor;
-    }
-
-    /* Mobile optimizations */
-    @media (max-width: 480px) {
-      .tab-btn {
-        font-size: 0.75rem;
-        padding: 0.625rem 0.375rem;
+    @keyframes shake {
+      10%, 90% {
+        transform: translate3d(-1px, 0, 0);
       }
-      
-      .tab-content {
-        padding: 1rem;
+      20%, 80% {
+        transform: translate3d(2px, 0, 0);
       }
-      
-      .form-input {
-        font-size: 16px; /* Prevents zoom on iOS */
+      30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+      }
+      40%, 60% {
+        transform: translate3d(4px, 0, 0);
       }
     }
-
-    /* Landscape mobile optimization */
-    @media (max-height: 500px) and (orientation: landscape) {
-      .header {
-        padding: 0.5rem;
-      }
-      
-      .main-content {
-        padding: 0.5rem;
-      }
-      
-      .tab-content {
-        padding: 1rem;
-      }
+    .fade-in {
+      animation: fadeIn 0.8s ease-in-out;
     }
-
-    /* Animation for tab switching */
-    .tab-panel {
-      animation: fadeIn 0.3s ease-in-out;
-    }
-
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-
-    .pulse {
-      animation: pulse 2s infinite;
+    .btn-press {
+        transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-
-    @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.7;
-      }
+    .btn-press:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .tab-panel-transition {
+      transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <header class="header">
-      <div class="brand">BTTools v3</div>
-      <div class="subtitle">Advanced Barcode Tools</div>
+<body class="bg-gray-900 text-gray-100 flex flex-col min-h-screen">
+  
+  <!-- Main Container -->
+  <div id="main-content" class="fade-in flex-grow flex flex-col items-center justify-start p-4 md:p-8 space-y-6">
+
+    <!-- Header -->
+    <header class="w-full max-w-lg text-center p-4 bg-gray-800 rounded-xl shadow-lg border border-gray-700">
+      <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+        BTTools
+      </h1>
+      <p class="text-sm text-gray-400 mt-1">Advanced Barcode Utilities</p>
     </header>
 
-    <main class="main-content">
-      <nav class="tab-navigation">
-        <button class="tab-btn active" data-tab="find-offset">
-          <svg class="icon" viewBox="0 0 24 24">
-            <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
-          </svg>
-          Find Offset
-        </button>
-        <button class="tab-btn" data-tab="check-offset">
-          <svg class="icon" viewBox="0 0 24 24">
-            <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-          </svg>
-          Check
-        </button>
-        <button class="tab-btn" data-tab="generate">
-          <svg class="icon" viewBox="0 0 24 24">
-            <path d="M3,4V6H21V4H3M3,11H21V9H3V11M3,18H21V16H3V18Z" />
-          </svg>
-          Generate
-        </button>
-      </nav>
+    <!-- Modal for messages -->
+    <div id="messageModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-2xl border border-gray-700 w-full max-w-sm text-center transform transition-all duration-300 scale-95 opacity-0">
+            <h3 id="modalTitle" class="text-lg font-bold mb-2"></h3>
+            <p id="modalMessage" class="text-sm text-gray-300 mb-4"></p>
+            <button onclick="hideModal()" class="w-full py-2 px-4 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors btn-press">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="w-full max-w-lg bg-gray-800 rounded-full p-1 flex shadow-inner">
+      <button id="find-offset-btn" data-tab="find-offset" class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-700 text-gray-200">Find Offset</button>
+      <button id="generate-btn" data-tab="generate" class="flex-1 py-2 px-4 rounded-full text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 hover:bg-gray-700">Generate</button>
+    </div>
+
+    <!-- Tab Content Container -->
+    <div id="tab-container" class="w-full max-w-lg p-6 bg-gray-800 rounded-2xl shadow-xl border border-gray-700">
 
       <!-- Find Effective Offset Tab -->
-      <div class="tab-content tab-panel" id="find-offset">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-              </svg>
-              Time 1 (HHMMSS)
-            </label>
-            <input type="text" class="form-input" id="time1" placeholder="123456" maxlength="6" pattern="[0-9]{6}">
+      <div id="find-offset-tab" class="tab-panel tab-panel-transition space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Time 1 (HHMMSS)</label>
+            <input type="tel" id="time1" placeholder="123456" maxlength="6" pattern="[0-9]{6}" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M3,4V6H21V4H3M3,11H21V9H3V11M3,18H21V16H3V18Z" />
-              </svg>
-              Code 1
-            </label>
-            <input type="number" class="form-input" id="code1" placeholder="Enter code">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Code 1</label>
+            <input type="tel" id="code1" placeholder="Enter code" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-              </svg>
-              Time 2 (HHMMSS)
-            </label>
-            <input type="text" class="form-input" id="time2" placeholder="123456" maxlength="6" pattern="[0-9]{6}">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Time 2 (HHMMSS)</label>
+            <input type="tel" id="time2" placeholder="123456" maxlength="6" pattern="[0-9]{6}" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M3,4V6H21V4H3M3,11H21V9H3V11M3,18H21V16H3V18Z" />
-              </svg>
-              Code 2
-            </label>
-            <input type="number" class="form-input" id="code2" placeholder="Enter code">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Code 2</label>
+            <input type="tel" id="code2" placeholder="Enter code" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
         </div>
-        <button class="action-btn" onclick="findEffectiveOffset()">Find Effective Offset</button>
-        <div id="result1" class="result-panel hidden"></div>
-      </div>
-
-      <!-- Check Known Offset Tab -->
-      <div class="tab-content tab-panel hidden" id="check-offset">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-              </svg>
-              Time (HHMMSS)
-            </label>
-            <input type="text" class="form-input" id="timeKnown" placeholder="123456" maxlength="6" pattern="[0-9]{6}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M3,4V6H21V4H3M3,11H21V9H3V11M3,18H21V16H3V18Z" />
-              </svg>
-              Code
-            </label>
-            <input type="number" class="form-input" id="codeKnown" placeholder="Enter code">
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6M6,8.5A1.5,1.5 0 0,1 7.5,7A1.5,1.5 0 0,1 9,8.5A1.5,1.5 0 0,1 7.5,10A1.5,1.5 0 0,1 6,8.5M18,8.5A1.5,1.5 0 0,1 16.5,10A1.5,1.5 0 0,1 15,8.5A1.5,1.5 0 0,1 16.5,7A1.5,1.5 0 0,1 18,8.5Z" />
-              </svg>
-              Effective Offset
-            </label>
-            <input type="number" class="form-input" id="offsetKnown" placeholder="Enter offset">
-          </div>
-        </div>
-        <button class="action-btn" onclick="checkOffset()">Check Offset</button>
-        <div id="result2" class="result-panel hidden"></div>
+        <button onclick="findEffectiveOffset()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-lg shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105 btn-press">Find Offset</button>
+        <div id="result-find-offset" class="result-container hidden bg-gray-700 p-4 rounded-lg border border-gray-600"></div>
       </div>
 
       <!-- Generate Barcode Tab -->
-      <div class="tab-content tab-panel hidden" id="generate">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6Z" />
-              </svg>
-              Segment 1
-            </label>
-            <input type="text" class="form-input" id="seg1" placeholder="Enter seg1">
+      <div id="generate-tab" class="tab-panel tab-panel-transition hidden space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Segment 1</label>
+            <input type="text" id="seg1" placeholder="Enter seg1" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-              </svg>
-              Time (HHMMSS)
-            </label>
-            <input type="text" class="form-input" id="timeGen" placeholder="123456" maxlength="6" pattern="[0-9]{6}">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Time (HHMMSS)</label>
+            <input type="tel" id="timeGen" placeholder="123456" maxlength="6" pattern="[0-9]{6}" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6M6,8.5A1.5,1.5 0 0,1 7.5,7A1.5,1.5 0 0,1 9,8.5A1.5,1.5 0 0,1 7.5,10A1.5,1.5 0 0,1 6,8.5M18,8.5A1.5,1.5 0 0,1 16.5,10A1.5,1.5 0 0,1 15,8.5A1.5,1.5 0 0,1 16.5,7A1.5,1.5 0 0,1 18,8.5Z" />
-              </svg>
-              Effective Offset
-            </label>
-            <input type="tel" class="form-input" id="offsetGen" placeholder="Enter offset" inputmode="numeric">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Effective Offset</label>
+            <input type="tel" id="offsetGen" placeholder="Enter offset" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-              </svg>
-              Segment 5 (Cashier ID)
-            </label>
-            <input type="text" class="form-input" id="seg5" placeholder="Cashier ID">
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Segment 5 (Cashier ID)</label>
+            <input type="text" id="seg5" placeholder="Cashier ID" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12,6A3,3 0 0,0 9,9A3,3 0 0,0 12,12A3,3 0 0,0 15,9A3,3 0 0,0 12,6Z" />
-              </svg>
-              Segment 6
-            </label>
-            <input type="text" class="form-input" id="seg6" placeholder="Enter seg6">
+          <div class="col-span-1 md:col-span-2">
+            <label class="block text-sm font-medium text-gray-400 mb-1">Segment 6</label>
+            <input type="text" id="seg6" placeholder="Enter seg6" class="w-full p-3 rounded-md bg-gray-700 border border-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
           </div>
         </div>
-        <button class="action-btn" onclick="generateBarcode()">Generate Barcode</button>
-        <div id="result3" class="result-panel hidden"></div>
-        <div class="barcode-container">
-          <img id="barcodeImg" class="barcode-image hidden" alt="Generated Barcode">
+        <button onclick="generateBarcode()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-lg shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all transform hover:scale-105 btn-press">Generate Barcode</button>
+        <div id="result-generate" class="result-container hidden bg-gray-700 p-4 rounded-lg border border-gray-600"></div>
+        
+        <div id="barcode-output" class="hidden flex flex-col items-center space-y-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
+            <div id="barcode-container" class="bg-white p-4 rounded-lg shadow-lg">
+                <img id="barcodeImg" class="max-w-full h-auto rounded-md" alt="Generated Barcode">
+            </div>
+            <div class="flex space-x-2 w-full">
+                <button onclick="copyToClipboard(generatedBarcodeCode, true)" class="flex-1 py-2 px-4 rounded-md bg-gray-600 text-white hover:bg-gray-500 transition-colors flex items-center justify-center btn-press">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"></path><path d="M6 7a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H8a2 2 0 01-2-2V7z"></path><path fill-rule="evenodd" d="M3 13V7a4 4 0 014-4h6a4 4 0 014 4v6a4 4 0 01-4 4H7a4 4 0 01-4-4zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    Copy
+                </button>
+                <button onclick="downloadBarcode()" class="flex-1 py-2 px-4 rounded-md bg-gray-600 text-white hover:bg-gray-500 transition-colors flex items-center justify-center btn-press">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M13 10V3a1 1 0 10-2 0v7l-3-3a1 1 0 10-1.414 1.414l5 5a1 1 0 001.414 0l5-5A1 1 0 1016 7z"></path><path d="M12 15a1 1 0 100 2h2a2 2 0 002-2v-2a1 1 0 10-2 0v2zM5 13a1 1 0 100-2H3v2a2 2 0 002 2h2a1 1 0 100-2H5z"></path></svg>
+                    Download
+                </button>
+            </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 
+  <!-- Footer -->
+  <footer class="w-full p-4 text-center text-sm text-gray-500 border-t border-gray-800">
+    <p>&copy; 2024 BTTools. All Rights Reserved.</p>
+    <p class="mt-1">Version 1.1</p>
+  </footer>
+
   <script>
-    // Tab switching functionality
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabPanels = document.querySelectorAll('.tab-content');
+    // Tab switching and UI logic
+    const tabButtons = document.querySelectorAll('[data-tab]');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    const tabContainer = document.getElementById('tab-container');
+    
+    let generatedBarcodeCode = '';
 
-    tabButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const targetTab = button.dataset.tab;
-        
-        // Remove active class from all buttons
-        tabButtons.forEach(btn => btn.classList.remove('active'));
-        // Add active class to clicked button
-        button.classList.add('active');
-        
-        // Hide all panels
-        tabPanels.forEach(panel => panel.classList.add('hidden'));
-        // Show target panel
-        document.getElementById(targetTab).classList.remove('hidden');
-      });
-    });
+    function switchTab(targetTab) {
+      const currentTab = document.querySelector('.tab-panel:not(.hidden)');
+      const nextTab = document.getElementById(`${targetTab}-tab`);
 
-    // Utility functions
+      if (currentTab) {
+        currentTab.classList.remove('opacity-100', 'translate-y-0');
+        currentTab.classList.add('opacity-0', 'translate-y-2');
+      }
+
+      setTimeout(() => {
+        tabButtons.forEach(btn => {
+          if (btn.dataset.tab === targetTab) {
+            btn.classList.add('bg-gray-700', 'text-gray-200');
+            btn.classList.remove('hover:bg-gray-700');
+          } else {
+            btn.classList.remove('bg-gray-700', 'text-gray-200');
+            btn.classList.add('hover:bg-gray-700');
+          }
+        });
+
+        tabPanels.forEach(panel => {
+          panel.classList.add('hidden');
+        });
+
+        if (nextTab) {
+          nextTab.classList.remove('hidden');
+          setTimeout(() => {
+            nextTab.classList.add('opacity-100', 'translate-y-0');
+          }, 10); // A slight delay to allow the hidden class to be removed first
+        }
+      }, currentTab ? 300 : 0); // Delay matches the CSS transition time
+    }
+
+    // Helper functions
     function parseTime(str) {
       if (!str) return null;
       const s = str.trim();
@@ -476,13 +230,39 @@
       return t.H * 3600 + t.M * 60 + t.S;
     }
 
-    function showResult(elementId, content, isError = false) {
+    function showModal(title, message, isError = false) {
+      const modal = document.getElementById('messageModal');
+      const modalContent = modal.querySelector('div');
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+
+      if (isError) {
+        tabContainer.classList.add('shake');
+        modalContent.classList.add('border-red-500');
+        setTimeout(() => tabContainer.classList.remove('shake'), 500);
+      } else {
+        modalContent.classList.remove('border-red-500');
+      }
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+          modalContent.classList.remove('scale-95', 'opacity-0');
+          modalContent.classList.add('scale-100', 'opacity-100');
+      }, 10);
+    }
+    
+    function hideModal() {
+        const modal = document.getElementById('messageModal');
+        const modalContent = modal.querySelector('div');
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    function showResult(elementId, content) {
       const element = document.getElementById(elementId);
       element.textContent = content;
       element.classList.remove('hidden');
-      element.style.background = isError 
-        ? 'linear-gradient(135deg, #dc2626, #b91c1c)' 
-        : 'linear-gradient(135deg, #1e293b, #334155)';
     }
 
     function prefillGenerator(time, offset) {
@@ -490,8 +270,7 @@
         `${String(time.H).padStart(2, '0')}${String(time.M).padStart(2, '0')}${String(time.S).padStart(2, '0')}`;
       document.getElementById('offsetGen').value = offset;
       
-      // Switch to generator tab
-      document.querySelector('[data-tab="generate"]').click();
+      switchTab('generate');
     }
 
     // Tab 1: Find Effective Offset
@@ -502,7 +281,7 @@
       const c2 = +document.getElementById('code2').value.trim();
 
       if (!t1 || !t2 || isNaN(c1) || isNaN(c2)) {
-        showResult('result1', 'Please fill all fields with valid values', true);
+        showModal('Error', 'Please fill all fields with valid values.', true);
         return;
       }
 
@@ -512,39 +291,15 @@
       const off2 = c2 - s2;
 
       if (off1 !== off2) {
-        showResult('result1', `⚠️ Offsets differ!\nOffset 1: ${off1}\nOffset 2: ${off2}`, true);
+        showModal('Error', `Offsets differ! Offset 1: ${off1}, Offset 2: ${off2}. Cannot find a single effective offset.`, true);
       } else {
-        showResult('result1', `✅ Effective Offset Found: ${off1}`);
+        showModal('Success', `Effective Offset Found: ${off1}. The generator tab has been pre-filled for you.`, false);
         prefillGenerator(t2, off1);
+        showResult('result-find-offset', `Effective Offset: ${off1}`);
       }
     }
 
-    // Tab 2: Check Known Offset
-    function checkOffset() {
-      const t = parseTime(document.getElementById('timeKnown').value);
-      const c = +document.getElementById('codeKnown').value.trim();
-      const off = +document.getElementById('offsetKnown').value.trim();
-
-      if (!t || isNaN(c) || isNaN(off)) {
-        showResult('result2', 'Please fill all fields with valid values', true);
-        return;
-      }
-
-      const s = toSeconds(t);
-      const diff = c - s;
-      const isMatch = diff === off;
-
-      showResult('result2', 
-        `${isMatch ? '✅' : '❌'} Offset Check\nCalculated difference: ${diff}\nExpected offset: ${off}\nResult: ${isMatch ? 'MATCH' : 'NO MATCH'}`,
-        !isMatch
-      );
-
-      if (isMatch) {
-        prefillGenerator(t, off);
-      }
-    }
-
-    // Tab 3: Generate Barcode
+    // Tab 2: Generate Barcode
     function generateBarcode() {
       const seg1 = document.getElementById('seg1').value.trim();
       const t = parseTime(document.getElementById('timeGen').value);
@@ -553,7 +308,7 @@
       const seg6 = document.getElementById('seg6').value.trim();
 
       if (!t || isNaN(off)) {
-        showResult('result3', 'Please provide valid time and offset values', true);
+        showModal('Error', 'Please provide valid time and offset values.', true);
         return;
       }
 
@@ -564,46 +319,25 @@
       const mm = String(t.M).padStart(2, '0');
       const ss = String(t.S).padStart(2, '0');
       const seg4 = (hh + mm + ss).replace(/^0+/, '');
-      const fullCode = seg1 + String(seg2).padStart(6, '0') + seg3 + seg4 + seg5 + seg6;
-
-      showResult('result3', `Generated Code: ${fullCode}`);
-
-      // Generate and display barcode
-      const barcodeImg = document.getElementById('barcodeImg');
-      barcodeImg.src = `https://barcode.orcascan.com/?type=code128&data=${encodeURIComponent(fullCode)}`;
-      barcodeImg.classList.remove('hidden');
+      generatedBarcodeCode = seg1 + String(seg2).padStart(6, '0') + seg3 + seg4 + seg5 + seg6;
       
-      // Add loading animation
-      barcodeImg.classList.add('pulse');
+      showResult('result-generate', `Generated Code: ${generatedBarcodeCode}`);
+      
+      const barcodeImg = document.getElementById('barcodeImg');
+      barcodeImg.src = `https://barcode.orcascan.com/?type=code128&data=${encodeURIComponent(generatedBarcodeCode)}`;
+      document.getElementById('barcode-output').classList.remove('hidden');
+      
       barcodeImg.onload = () => {
-        barcodeImg.classList.remove('pulse');
+        barcodeImg.classList.remove('animate-pulse');
       };
-    }
-
-    // Copy barcode number to clipboard
-    function copyBarcodeNumber() {
-      copyToClipboard(generatedBarcodeCode, true);
+      
+      barcodeImg.classList.add('animate-pulse');
     }
 
     // Copy to clipboard utility function
     function copyToClipboard(text, showFeedback = true) {
       if (!text) return;
-
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(() => {
-          if (showFeedback) {
-            showCopySuccess();
-          }
-        }).catch(() => {
-          fallbackCopyTextToClipboard(text, showFeedback);
-        });
-      } else {
-        fallbackCopyTextToClipboard(text, showFeedback);
-      }
-    }
-
-    // Fallback copy method for older browsers
-    function fallbackCopyTextToClipboard(text, showFeedback) {
+      
       const textArea = document.createElement("textarea");
       textArea.value = text;
       textArea.style.position = "fixed";
@@ -616,129 +350,69 @@
       try {
         document.execCommand('copy');
         if (showFeedback) {
-          showCopySuccess();
+          showModal('Success', 'Barcode code copied to clipboard!');
         }
       } catch (err) {
-        console.error('Fallback: Oops, unable to copy', err);
+        showModal('Error', 'Could not copy text to clipboard.', true);
+      } finally {
+        document.body.removeChild(textArea);
       }
-      
-      document.body.removeChild(textArea);
-    }
-
-    // Show copy success feedback
-    function showCopySuccess() {
-      const copyBtn = document.querySelector('.copy-btn');
-      const originalHTML = copyBtn.innerHTML;
-      
-      copyBtn.classList.add('copy-success');
-      copyBtn.innerHTML = `
-        <svg class="icon" viewBox="0 0 24 24">
-          <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-        </svg>
-        Copied!
-      `;
-      
-      setTimeout(() => {
-        copyBtn.classList.remove('copy-success');
-        copyBtn.innerHTML = originalHTML;
-      }, 2000);
     }
 
     // Download barcode as PNG
     function downloadBarcode() {
       const barcodeImg = document.getElementById('barcodeImg');
-      
-      if (!barcodeImg.src || barcodeImg.src === '') {
-        alert('No barcode to download');
+      if (!barcodeImg.src) {
+        showModal('Error', 'No barcode to download.', true);
         return;
       }
 
-      // Create a canvas to convert the image
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      // Create a new image element
+      // Create a new image element to handle potential CORS issues
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      
-      img.onload = function() {
-        // Set canvas dimensions to match image
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         canvas.width = img.width;
         canvas.height = img.height;
         
-        // Fill white background
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw the barcode image
         ctx.drawImage(img, 0, 0);
         
-        // Convert canvas to blob
-        canvas.toBlob(function(blob) {
-          // Create download link
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `barcode_${generatedBarcodeCode}_${new Date().getTime()}.png`;
-          
-          // Trigger download
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          // Clean up
-          URL.revokeObjectURL(url);
-        }, 'image/png');
+        const link = document.createElement('a');
+        link.download = `barcode_${generatedBarcodeCode || new Date().getTime()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       };
-      
-      img.onerror = function() {
-        // If CORS fails, try alternative method
-        downloadBarcodeAlternative();
+      img.onerror = () => {
+        showModal('Error', 'Failed to download barcode image. It might be due to a CORS policy.', true);
       };
-      
       img.src = barcodeImg.src;
     }
 
-    // Alternative download method
-    function downloadBarcodeAlternative() {
-      const barcodeImg = document.getElementById('barcodeImg');
-      const link = document.createElement('a');
-      link.href = barcodeImg.src;
-      link.download = `barcode_${generatedBarcodeCode}_${new Date().getTime()}.png`;
-      link.target = '_blank';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    // Auto-format time inputs
-    document.querySelectorAll('input[placeholder*="HHMMSS"]').forEach(input => {
-      input.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 6) value = value.substring(0, 6);
-        e.target.value = value;
-      });
-    });
-
-    // Add haptic feedback for mobile devices
-    if ('vibrate' in navigator) {
-      document.querySelectorAll('button').forEach(button => {
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', () => {
+      // Add event listeners to tab buttons
+      tabButtons.forEach(button => {
         button.addEventListener('click', () => {
-          navigator.vibrate(50);
+          const targetTab = button.dataset.tab;
+          switchTab(targetTab);
         });
       });
-    }
 
-    // Prevent zoom on double tap for iOS
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function (event) {
-      const now = (new Date()).getTime();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-      }
-      lastTouchEnd = now;
-    }, false);
+      // Add initial classes for animation
+      tabPanels.forEach(panel => {
+        panel.classList.add('tab-panel-transition', 'opacity-0', 'translate-y-2');
+      });
+      document.getElementById('find-offset-tab').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('find-offset-tab').classList.add('opacity-100', 'translate-y-0');
+      }, 10);
+    });
   </script>
 </body>
 </html>
